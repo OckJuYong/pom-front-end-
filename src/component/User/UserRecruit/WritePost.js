@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "react-quill/dist/quill.snow.css";
 import styles from "./WritePost.module.css";
 import MarkdownEditor from "@uiw/react-markdown-editor";
@@ -15,6 +15,9 @@ import deleteIcon from "../../../Icons/delete.gif";
 import staticDelete from "../../../Icons/static-delete.png";
 
 import "./toolbar.css";
+import { useDispatch, useSelector } from "react-redux";
+import { saveContent, saveTitle } from "../../../store";
+import axios from "axios";
 // https://velog.io/@hskwon517/React-Quill-%EC%97%90%EB%94%94%ED%84%B0-%EC%82%AC%EC%9A%A9%ED%95%98%EA%B8%B0
 // 나중에 이미지, 태그 서버로 보낼때 참고.
 
@@ -66,7 +69,7 @@ const cancelline = {
     view.dispatch(
       view.state.changeByRange((range) => ({
         changes: [
-          { from: range.from, insert: "~~" },
+          { from: range.from, insert: "~~텍스트" },
           { from: range.to, insert: "~~" },
         ],
         range: EditorSelection.range(range.from + 2, range.to + 2),
@@ -90,7 +93,7 @@ const italic = {
     view.dispatch(
       view.state.changeByRange((range) => ({
         changes: [
-          { from: range.from, insert: "*" },
+          { from: range.from, insert: "*텍스트" },
           { from: range.to, insert: "*" },
         ],
         range: EditorSelection.range(range.from + 1, range.to + 1),
@@ -114,7 +117,7 @@ const bold = {
     view.dispatch(
       view.state.changeByRange((range) => ({
         changes: [
-          { from: range.from, insert: "**" },
+          { from: range.from, insert: "**텍스트" },
           { from: range.to, insert: "**" },
         ],
         range: EditorSelection.range(range.from + 2, range.to + 2),
@@ -303,8 +306,48 @@ const image = {
   },
 };
 
+const link = {
+  name: "link",
+  keyCommand: "link",
+  button: { "aria-label": "Add link text" },
+  icon: (
+    <svg fill="currentColor" viewBox="0 0 640 512" height="16" width="16">
+      <path d="M172.5 131.1c55.6-55.59 148-55.59 203.6 0 50 50 57.4 129.7 16.3 187.2l-1.1 1.6c-10.3 14.3-30.3 17.7-44.6 7.4-14.4-10.3-17.8-30.3-7.5-44.6l1.1-1.6c22.9-32.1 19.3-76-8.6-103.9-31.4-31.4-82.5-31.4-114 0L105.5 289.5c-31.51 30.6-31.51 82.5 0 114 27.8 27.9 71.8 31.5 103.8 8.6l1.6-2c14.4-9.4 34.4-6.1 44.6 8.3 10.3 14.4 7 34.4-7.4 44.7l-1.6 1.1c-58.4 41.1-136.3 34.5-186.29-15.4-56.469-56.5-56.469-148.1 0-204.5L172.5 131.1zm295 248.9c-56.5 56.5-148 56.5-204.5 0-50-50-56.5-128.8-15.4-186.3l1.1-1.6c9.4-14.3 29.4-17.7 44.6-7.4 14.4 9.4 17.8 29.4 7.5 44.6l-1.1 1.6c-22.9 31.2-19.3 76 8.6 103.9 31.4 31.4 82.5 31.4 114 0l112.2-112.3c31.5-31.5 31.5-83.4 0-114-27.8-27.87-71.8-31.51-103.8-8.6l-1.6 1.1c-14.4 10.3-34.4 6.1-44.6-7.42-10.3-14.38-7-34.37 7.4-44.64l1.6-1.12C451 6.731 529.8 13.25 579.8 63.24c56.5 56.46 56.5 148.06 0 204.46L467.5 380z" />
+    </svg>
+  ),
+  execute: ({ state, view }) => {
+    if (!state || !view) return;
+    if (!state || !view) return;
+    const main = view.state.selection.main;
+    const txt = view.state.sliceDoc(
+      view.state.selection.main.from,
+      view.state.selection.main.to
+    );
+    view.dispatch({
+      changes: {
+        from: main.from,
+        to: main.to,
+        insert: `[${txt}]()`,
+      },
+      selection: EditorSelection.range(main.from + 3 + txt.length, main.to + 3),
+      // selection: { anchor: main.from + 4 },
+    });
+  },
+};
+
 const WritePost = () => {
+  const post = useSelector((state) => {
+    return state.savePost;
+  });
+
+  let dispatch = useDispatch();
+
   const [input, setInput] = useState("");
+
+  useEffect(() => {
+    console.log(post.content);
+  }, [post.content]);
+
   const [isHoverEdit, setHoverEdit] = useState(false);
   const [isHoverExit, setHoverExit] = useState(false);
   const [isHoverDel, setHoverDel] = useState(false);
@@ -347,16 +390,20 @@ const WritePost = () => {
             ref={textRef}
             className={styles.TitleForm}
             onInput={handleResizeHeight}
+            onChange={(e) => {
+              dispatch(saveTitle(e.target.value));
+            }}
           />
         </div>
 
         <div className={styles.Wrap}>
-          <div className={styles.md} data-color-mode="light">
+          <div className={styles.md} data-color-mode={"light"}>
             <MarkdownEditor
               autoFocus={true}
-              value={input}
               height={"70vh"}
-              onChange={setInput}
+              onChange={(input) => {
+                setInput(input);
+              }}
               toolbars={[
                 title1,
                 title2,
@@ -367,7 +414,7 @@ const WritePost = () => {
                 quote,
                 todo,
                 image,
-                "link",
+                link,
               ]}
               toolbarsMode={[]}
               enablePreview={false}
@@ -386,41 +433,52 @@ const WritePost = () => {
             overflowY: "auto",
           }}
         />
-        <div className={styles.footerContainer}>
-          <button
-            onMouseEnter={onMouseExit}
-            onMouseLeave={leaveMouseExit}
-            className={styles.exitBtn}
-          >
-            {isHoverExit ? (
-              <img src={exit} alt="" />
-            ) : (
-              <img src={staticExit} alt="" />
-            )}
-          </button>
-          <button
-            onMouseEnter={onMouseEdit}
-            onMouseLeave={leaveMouseEdit}
-            className={styles.submitBtn}
-          >
-            {isHoverEdit ? (
-              <img src={edit} alt="" />
-            ) : (
-              <img src={staticEdit} alt="" />
-            )}
-          </button>
-          <button
-            onMouseEnter={onMouseDel}
-            onMouseLeave={leaveMouseDel}
-            className={styles.deleteBtn}
-          >
-            {isHoverDel ? (
-              <img src={deleteIcon} alt="" />
-            ) : (
-              <img src={staticDelete} alt="" />
-            )}
-          </button>
-        </div>
+      </div>
+      <div className={styles.footerContainer}>
+        <button
+          onMouseEnter={onMouseExit}
+          onMouseLeave={leaveMouseExit}
+          className={styles.exitBtn}
+        >
+          {isHoverExit ? (
+            <img src={exit} alt="" />
+          ) : (
+            <img src={staticExit} alt="" />
+          )}
+        </button>
+        <button
+          onMouseEnter={onMouseEdit}
+          onMouseLeave={leaveMouseEdit}
+          className={styles.submitBtn}
+          onClick={() => {
+            dispatch(saveContent(input));
+            axios
+              .post("http://211.216.233.66:5000/api/employment", { ...post })
+              .then((res) => {
+                console.log(res.data);
+              })
+              .catch(() => {
+                alert("Failed to POST");
+              });
+          }}
+        >
+          {isHoverEdit ? (
+            <img src={edit} alt="" />
+          ) : (
+            <img src={staticEdit} alt="" />
+          )}
+        </button>
+        <button
+          onMouseEnter={onMouseDel}
+          onMouseLeave={leaveMouseDel}
+          className={styles.deleteBtn}
+        >
+          {isHoverDel ? (
+            <img src={deleteIcon} alt="" />
+          ) : (
+            <img src={staticDelete} alt="" />
+          )}
+        </button>
       </div>
     </div>
   );

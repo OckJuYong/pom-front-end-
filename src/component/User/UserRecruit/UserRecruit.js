@@ -5,7 +5,7 @@ import UserPage from "./UserPage.js";
 import CompanyPage from "./CompanyPage.js";
 
 const UserRecruit = () => {
-  const [isUser, setIsUser] = useState(true);
+  const [isUser, setIsUser] = useState(false);
 
   return (
     <div>

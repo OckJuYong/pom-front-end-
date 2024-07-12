@@ -4,11 +4,11 @@
 }
 
 .NavContainer {
-  top: 30%;
   height: 200px;
   border-radius: 10px;
   padding: 15px;
   left: 5%;
+  top: 30%;
   background: transparent;
   color: grey;
 
@@ -19,20 +19,17 @@
   justify-content: space-between;
   align-items: center;
 }
-
+.NavContainer .child:hover {
+  color: black;
+  cursor: pointer;
+}
 .Contents {
   margin-left: 200px;
-  width: 800px;
+  width: 500px;
 }
 @media screen and (max-width: 1000px) {
   .Contents {
     width: 400px;
-  }
-}
-@media screen and (min-width: 1000px) {
-  .Contents {
-    margin-left: 200px;
-    margin-right: 200px;
   }
 }
 .showContainer {

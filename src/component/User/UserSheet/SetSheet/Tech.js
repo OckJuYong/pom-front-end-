@@ -1,65 +1,103 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import styles from "./SetUserSheet.module.css";
+import dayjs from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { useDispatch, useSelector } from "react-redux";
 
-const Tech = ({ isOpen, onClose, tech, setTech }) => {
-  if (!isOpen) return null;
+import {
+  addTech,
+  deleteTech,
+  setTechCertGetDay,
+  setTechCertIssuer,
+  setTechCertNm,
+} from "../../../../store.js";
+
+const Tech = () => {
+  let [cnt, setCnt] = useState(0);
+
+  let dispatch = useDispatch();
+
+  let user = useSelector((state) => {
+    return state.usersheet;
+  });
+
+  let CallbackParameter = (i, day) => {
+    return [i, day];
+  };
+
+  const datePickerFormat = "YYYY-MM-DD";
+  const datePickerUtils = {
+    format: datePickerFormat,
+    parse: (value) => dayjs(value, datePickerFormat, true).toDate(),
+    // You can add other utils as needed, such as `isValid`, etc.
+  };
   return (
     <div className={styles.Tech}>
-      <div className={styles.backdrop} onClick={onClose} />
-      <div className={styles.testModal}>
-        <div className={styles.modalNav}>여기는 모달 제목, 닫기버튼</div>
-        <div className={styles.modalMain}>
-          {tech.map(function (a, i) {
-            return (
-              <div className={styles.TechInputContainer} key={i}>
-                <input placeholder="자격증명*"></input>
-                <input placeholder="발행처/기관"></input>
-                <br />
-                <select className={styles.SelectYN}>
-                  <option id="No">No</option>
-                  <option id="Yes">Yes</option>
-                </select>
-                <br />
-                <select>
-                  <option>합격구분*</option>
-                  <option>1차합격</option>
-                  <option>2차합격</option>
-                  <option>필기합격</option>
-                  <option>실기합격</option>
-                  <option>최종합격</option>
-                </select>
-                <input type="date"></input>
-                <br />
-                <button
-                  className="deleteTechBtn"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    let copy = [...tech];
-                    copy.splice(i, 1);
-                    setTech(copy);
-                  }}
-                >
-                  X
-                </button>
-              </div>
-            );
-          })}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              let copy = [...tech];
-              copy.push({});
-              setTech(copy);
-            }}
-          >
-            추가하기
-          </button>
-        </div>
-        <div className={styles.modalFooter}>
-          <button>제출</button>
-          <button>취소</button>
-        </div>
-      </div>
+      {user.tech.map(function (a, i) {
+        return (
+          <div className={styles.TechInputContainer} key={i}>
+            <input
+              placeholder="자격증명*"
+              onChange={(e) => {
+                dispatch(setTechCertNm(CallbackParameter(i, e.target.value)));
+              }}
+            />
+            <input
+              placeholder="발행처/기관*"
+              onChange={(e) => {
+                dispatch(
+                  setTechCertIssuer(CallbackParameter(i, e.target.valueAsDate))
+                );
+              }}
+            />
+            <LocalizationProvider
+              dateAdapter={AdapterDayjs}
+              dateFormats={datePickerUtils}
+            >
+              <DatePicker
+                label="취득일"
+                value={user.tech.tech_get_day}
+                format="YYYY / MM / DD"
+                onChange={(newVal) => {
+                  const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+                    2,
+                    "0"
+                  )}-${String(newVal.$D).padStart(2, "0")}`;
+                  dispatch(setTechCertGetDay(CallbackParameter(i, day)));
+                }}
+              />
+            </LocalizationProvider>
+            <button
+              type="button"
+              className="deleteTechBtn"
+              onClick={(e) => {
+                setCnt((cnt -= 1));
+                dispatch(deleteTech(user.tech[i].id));
+              }}
+            >
+              X
+            </button>
+          </div>
+        );
+      })}
+      <button
+        type="button"
+        onClick={(e) => {
+          setCnt((cnt += 1));
+          dispatch(
+            addTech({
+              id: cnt,
+              tech_name: "",
+              tech_get_day: "",
+              tech_issuer: "",
+            })
+          );
+          console.log(user.tech);
+        }}
+      >
+        추가하기
+      </button>
     </div>
   );
 };

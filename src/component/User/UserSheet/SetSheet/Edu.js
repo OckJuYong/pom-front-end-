@@ -3,52 +3,59 @@ import styles from "./SetUserSheet.module.css";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setEduEndDate,
+  setEduPassedDay,
+  setEduStartDate,
+  setEduStatus,
+  setEducation,
+  setGrade,
+  setMajor,
+  setPlural,
+  setPluralType,
+  setSchoolName,
+  setStandardGrade,
+} from "../../../../store";
 
-const Edu = ({ isOpen, onClose }) => {
+const Edu = () => {
+  const dispatch = useDispatch();
+
   const [school, setSchool] = useState();
 
-  if (!isOpen) return null;
+  const user = useSelector((state) => {
+    return state.usersheet;
+  });
+
   return (
     <div>
-      <div className={styles.backdrop} onClick={onClose} />
-      <div className={styles.testModal}>
-        <div className={styles.modalNav}>
-          <h3>학력사항을 기재해주세요.</h3>
-          <button>✖️</button>
-        </div>
-        <div>
-          <span>학력을 기재해 주세요.</span>
-          <select
-            onChange={(event) => {
-              setSchool(event.target.value);
-            }}
-          >
-            <option value={0}>학력 구분 선택*</option>
-            <option value={1}>초등학교 졸업</option>
-            <option value={2}>중학교 졸업</option>
-            <option value={3}>고등학교 졸업</option>
-            <option value={4}>대학ㆍ대학원 이상 졸업</option>
-            <option value={5}>기타 학력 졸업</option>
-          </select>
-          <Data value={school} />
-        </div>
-        <div className={styles.modalMain}></div>
-        <div className={styles.modalFooter}>
-          <button>저장</button>
-          <button>취소</button>
-        </div>
+      <div>
+        <span>학력을 기재해 주세요.</span>
+        <select
+          onChange={(event) => {
+            setSchool(event.target.value);
+          }}
+        >
+          <option value={""}>학력 구분 선택*</option>
+          <option value={1}>초등학교 졸업</option>
+          <option value={2}>중학교 졸업</option>
+          <option value={3}>고등학교 졸업</option>
+          <option value={4}>대학ㆍ대학원 이상 졸업</option>
+          <option value={5}>기타 학력 졸업</option>
+        </select>
+        <Data value={school} user={user} dispatch={dispatch} />
       </div>
     </div>
   );
 };
 
-const Data = ({ value }) => {
+const Data = ({ value, user, dispatch }) => {
   const [isGrad, setIsGrad] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+
   const [qualif, setQualif] = useState("");
 
   const datePickerFormat = "YYYY-MM";
+
   const datePickerUtils = {
     format: datePickerFormat,
     parse: (value) => dayjs(value, datePickerFormat, true).toDate(),
@@ -58,43 +65,39 @@ const Data = ({ value }) => {
   if (value == 1 || value == 2) {
     return (
       <div>
+        <label htmlFor="qualification">검정고시</label>
         <input
           type="checkbox"
           value={"n"}
           id="qualification"
           onChange={(e) => {
             setQualif(e.target.value);
+            // 검정고시 선택되면 나머지 전부 '검정고시'로 통일
           }}
         />
-        <label for="qualification">검정고시</label>
-
         {qualif == "n" ? (
-          <LocalizationProvider
-            dateAdapter={AdapterDayjs}
-            dateFormats={datePickerUtils}
-          >
-            <DatePicker
-              label="취득년월"
-              value={startDate}
-              format="YYYY / MM"
-              onChange={(newVal) => {
-                setStartDate(newVal);
-                setEndDate(newVal);
-                console.log(startDate);
-              }}
-            />
-          </LocalizationProvider>
+          <GED
+            user={user}
+            dispatch={dispatch}
+            datePickerUtils={datePickerUtils}
+          />
         ) : (
           <div>
-            <input type="text" placeholder="학교명" />
+            <input
+              type="text"
+              placeholder="학교명"
+              onChange={(e) => {
+                dispatch(setSchoolName(e.target.value));
+              }}
+            />
             <select
-              onChange={(event) => {
-                setIsGrad(event.target.value);
+              onChange={(e) => {
+                dispatch(setEduStatus(e.target.value));
               }}
             >
-              <option value={"none"}>졸업여부*</option>
-              <option value={"grad"}>졸업</option>
-              <option value={"drop"}>중퇴</option>
+              <option value={""}>졸업여부*</option>
+              <option value={"졸업"}>졸업</option>
+              <option value={"중퇴"}>중퇴</option>
             </select>
             <LocalizationProvider
               dateAdapter={AdapterDayjs}
@@ -102,20 +105,26 @@ const Data = ({ value }) => {
             >
               <DatePicker
                 label="입학년월"
-                value={startDate}
+                value={user.education.start_period}
                 format="YYYY / MM"
                 onChange={(newVal) => {
-                  setStartDate(newVal);
-                  console.log(startDate);
+                  const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+                    2,
+                    "0"
+                  )}-${String(newVal.$D).padStart(2, "0")}`;
+                  dispatch(setEduStartDate(day));
                 }}
               />
               <DatePicker
                 label="졸업년월"
-                value={endDate}
+                value={user.education.end_period}
                 format="YYYY / MM"
                 onChange={(newVal) => {
-                  setEndDate(newVal);
-                  console.log(endDate);
+                  const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+                    2,
+                    "0"
+                  )}-${String(newVal.$D).padStart(2, "0")}`;
+                  dispatch(setEduEndDate(day));
                 }}
               />
             </LocalizationProvider>
@@ -131,81 +140,84 @@ const Data = ({ value }) => {
           type="checkbox"
           value={"n"}
           id="qualification"
+          onClick={() => {}}
           onChange={(e) => {
             setQualif(e.target.value);
+            // 검정고시 선택되면 나머지 전부 '검정고시'로 통일
           }}
         />
-        <label for="qualification">검정고시</label>
+        <label htmlFor="qualification">검정고시</label>
 
         {qualif == "n" ? (
-          <LocalizationProvider
-            dateAdapter={AdapterDayjs}
-            dateFormats={datePickerUtils}
-          >
-            <DatePicker
-              label="취득년월"
-              value={startDate}
-              format="YYYY / MM"
-              onChange={(newVal) => {
-                setStartDate(newVal);
-                setEndDate(newVal);
-                console.log(startDate);
-              }}
-            />
-          </LocalizationProvider>
+          <GED
+            user={user}
+            dispatch={dispatch}
+            datePickerUtils={datePickerUtils}
+          />
         ) : (
           <div>
-            <input placeholder="학교명"></input>
+            <input
+              type="text"
+              placeholder="학교명"
+              onChange={(e) => {
+                dispatch(setSchoolName(e.target.value));
+              }}
+            />
             <select
-              onChange={(event) => {
-                setIsGrad(event.target.value);
+              onChange={(e) => {
+                dispatch(setEduStatus(e.target.value));
               }}
             >
-              <option value={"none"}>졸업여부*</option>
-              <option value={"grad"}>졸업</option>
-              <option value={"in"}>재학중</option>
-              <option value={"rest"}>휴학중</option>
-              <option value={"drop"}>중퇴</option>
-              <option value={"selfdrop"}>자퇴</option>
-              <option value={"exgrad"}>졸업예정</option>
+              <option value={""}>졸업여부*</option>
+              <option value={"졸업"}>졸업</option>
+              <option value={"재학"}>재학</option>
+              <option value={"휴학"}>휴학</option>
+              <option value={"중퇴"}>중퇴</option>
+              <option value={"자퇴"}>자퇴</option>
+              <option value={"졸업예정"}>졸업예정</option>
             </select>
-            <br />
             <LocalizationProvider
               dateAdapter={AdapterDayjs}
               dateFormats={datePickerUtils}
             >
               <DatePicker
                 label="입학년월"
-                value={startDate}
+                value={user.education.start_period}
                 format="YYYY / MM"
                 onChange={(newVal) => {
-                  setStartDate(newVal);
-                  console.log(startDate);
+                  const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+                    2,
+                    "0"
+                  )}-${String(newVal.$D).padStart(2, "0")}`;
+                  dispatch(setEduStartDate(day));
                 }}
               />
               <DatePicker
                 label="졸업년월"
-                value={endDate}
+                value={user.education.end_period}
                 format="YYYY / MM"
                 onChange={(newVal) => {
-                  setEndDate(newVal);
-                  console.log(endDate);
+                  const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+                    2,
+                    "0"
+                  )}-${String(newVal.$D).padStart(2, "0")}`;
+                  dispatch(setEduEndDate(day));
                 }}
               />
             </LocalizationProvider>
             <br />
             <select
-              onChange={(event) => {
-                setIsGrad(event.target.value);
+              onChange={(e) => {
+                dispatch(setEducation(e.target.value));
               }}
             >
-              <option value={"none"}>전공계열*</option>
-              <option value={"humanity"}>문과계열</option>
-              <option value={"stem"}>이과계열</option>
-              <option value={"vocational"}>전문(실업)계</option>
-              <option value={"artandphysic"}>예체능계</option>
-              <option value={"specialized"}>특성화/마이스터고</option>
-              <option value={"sppurpose"}>특수목적고</option>
+              <option value={""}>전공계열*</option>
+              <option value={"문과계열"}>문과계열</option>
+              <option value={"이과계열"}>이과계열</option>
+              <option value={"전문(실업)계"}>전문(실업)계</option>
+              <option value={"예체능계"}>예체능계</option>
+              <option value={"특성화/마이스터고"}>특성화/마이스터고</option>
+              <option value={"특수목적고"}>특수목적고</option>
             </select>
           </div>
         )}
@@ -216,72 +228,103 @@ const Data = ({ value }) => {
     return (
       <div>
         <select
-          onChange={(event) => {
-            setIsGrad(event.target.value);
+          onChange={(e) => {
+            dispatch(setEducation(e.target.value));
           }}
         >
-          <option value={"none"}>대학구분*</option>
-          <option value={"college"}>대학(2,3)년</option>
-          <option value={"univerity"}>대학교(4년)</option>
-          <option value={"master"}>대학원(석사)</option>
-          <option value={"doctorate"}>대학원(박사)</option>
+          <option value={""}>대학구분*</option>
+          <option value={"2년제"}>대학교(2년)</option>
+          <option value={"3년제"}>대학교(3년)</option>
+          <option value={"4년제"}>대학교(4년)</option>
+          <option value={"석사"}>대학원(석사)</option>
+          <option value={"박사"}>대학원(박사)</option>
         </select>
-        <input placeholder="학교명*" />
-        <br />
-        <input placeholder="전공*" />
+        <input
+          type="text"
+          placeholder="학교명"
+          onChange={(e) => {
+            dispatch(setSchoolName(e.target.value));
+          }}
+        />
+        <input
+          placeholder="전공*"
+          onChange={(e) => {
+            dispatch(setMajor(e.target.value));
+          }}
+        />
         <select
-          onChange={(event) => {
-            setIsGrad(event.target.value);
+          onChange={(e) => {
+            dispatch(setEduStatus(e.target.value));
           }}
         >
-          <option value={"none"}>졸업여부*</option>
-          <option value={"grad"}>졸업</option>
-          <option value={"in"}>재학중</option>
-          <option value={"rest"}>휴학중</option>
-          <option value={"drop"}>중퇴</option>
-          <option value={"selfdrop"}>자퇴</option>
-          <option value={"exgrad"}>졸업예정</option>
+          <option value={""}>졸업여부*</option>
+          <option value={"졸업"}>졸업</option>
+          <option value={"재학"}>재학</option>
+          <option value={"휴학"}>휴학</option>
+          <option value={"중퇴"}>중퇴</option>
+          <option value={"자퇴"}>자퇴</option>
+          <option value={"졸업예정"}>졸업예정</option>
         </select>
-        <br />
         <LocalizationProvider
           dateAdapter={AdapterDayjs}
           dateFormats={datePickerUtils}
         >
           <DatePicker
             label="입학년월"
-            value={startDate}
+            value={user.education.start_period}
             format="YYYY / MM"
             onChange={(newVal) => {
-              setStartDate(newVal);
-              console.log(startDate);
+              const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+                2,
+                "0"
+              )}-${String(newVal.$D).padStart(2, "0")}`;
+              dispatch(setEduStartDate(day));
             }}
           />
           <DatePicker
             label="졸업년월"
-            value={endDate}
+            value={user.education.end_period}
             format="YYYY / MM"
             onChange={(newVal) => {
-              setEndDate(newVal);
-              console.log(endDate.$y);
-              console.log(endDate.$m);
+              const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+                2,
+                "0"
+              )}-${String(newVal.$D).padStart(2, "0")}`;
+              dispatch(setEduEndDate(day));
             }}
           />
         </LocalizationProvider>
-        <br />
-        <input placeholder="학점" />
-        <select>
-          <option>기준학점</option>
-          <option>4.0</option>
-          <option>4.3</option>
-          <option>4.5</option>
+        <input
+          placeholder="학점"
+          onChange={(e) => {
+            dispatch(setGrade(e.target.value));
+          }}
+        />
+        <select
+          onChange={(e) => {
+            dispatch(setStandardGrade(e.target.value));
+          }}
+        >
+          <option value={""}>기준학점</option>
+          <option value={"4"}>4.0</option>
+          <option value={"4.3"}>4.3</option>
+          <option value={"4.5"}>4.5</option>
         </select>
-        <br />
-        <input placeholder="추가전공" />
-        <select>
-          <option>전공구분</option>
-          <option>부전공</option>
-          <option>복수전공</option>
-          <option>이중전공</option>
+        <input
+          placeholder="추가전공"
+          onChange={(e) => {
+            dispatch(setPlural(e.target.value));
+          }}
+        />
+        <select
+          onChange={(e) => {
+            dispatch(setPluralType(e.target.value));
+          }}
+        >
+          <option value={""}>전공구분*</option>
+          <option value={"부전공"}>부전공</option>
+          <option value={"복수전공"}>복수전공</option>
+          <option value={"이중전공"}>이중전공</option>
         </select>
       </div>
     );
@@ -290,52 +333,67 @@ const Data = ({ value }) => {
     return (
       <div>
         <select
-          onChange={(event) => {
-            setIsGrad(event.target.value);
+          onChange={(e) => {
+            dispatch(setEducation(e.target.value));
           }}
         >
-          <option value={"none"}>인정학력*</option>
-          <option value={"college"}>대학(2,3)년</option>
-          <option value={"univerity"}>대학교(4년)</option>
+          <option value={""}>인정학력*</option>
+          <option value={"2년제"}>대학(2년)</option>
+          <option value={"3년제"}>대학(3년)</option>
+          <option value={"4년제"}>대학교(4년)</option>
         </select>
-        <input placeholder="학교/학원명*" />
+        <input
+          placeholder="학교/학원명*"
+          onChange={(e) => {
+            dispatch(setSchoolName(e.target.value));
+          }}
+        />
         <br />
-        <input placeholder="전공분야*" />
+        <input
+          placeholder="전공분야*"
+          onChange={(e) => {
+            dispatch(setMajor(e.target.value));
+          }}
+        />
         <select
-          onChange={(event) => {
-            setIsGrad(event.target.value);
+          onChange={(e) => {
+            dispatch(setEduStatus(e.target.value));
           }}
         >
-          <option value={"none"}>졸업여부*</option>
-          <option value={"grad"}>졸업</option>
-          <option value={"in"}>재학중</option>
-          <option value={"rest"}>휴학중</option>
-          <option value={"drop"}>중퇴</option>
-          <option value={"selfdrop"}>자퇴</option>
-          <option value={"exgrad"}>졸업예정</option>
+          <option value={""}>졸업여부*</option>
+          <option value={"졸업"}>졸업</option>
+          <option value={"재학"}>재학</option>
+          <option value={"휴학"}>휴학</option>
+          <option value={"중퇴"}>중퇴</option>
+          <option value={"자퇴"}>자퇴</option>
+          <option value={"졸업예정"}>졸업예정</option>
         </select>
-        <br />
         <LocalizationProvider
           dateAdapter={AdapterDayjs}
           dateFormats={datePickerUtils}
         >
           <DatePicker
             label="입학년월"
-            value={startDate}
+            value={user.education.start_period}
             format="YYYY / MM"
             onChange={(newVal) => {
-              setStartDate(newVal);
-              console.log(startDate);
+              const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+                2,
+                "0"
+              )}-${String(newVal.$D).padStart(2, "0")}`;
+              dispatch(setEduStartDate(day));
             }}
           />
           <DatePicker
             label="졸업년월"
-            value={endDate}
+            value={user.education.end_period}
             format="YYYY / MM"
             onChange={(newVal) => {
-              setEndDate(newVal);
-              console.log(endDate.$y);
-              console.log(endDate.$m);
+              const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+                2,
+                "0"
+              )}-${String(newVal.$D).padStart(2, "0")}`;
+              dispatch(setEduEndDate(day));
             }}
           />
         </LocalizationProvider>
@@ -345,45 +403,73 @@ const Data = ({ value }) => {
   return null;
 };
 
-const IsTest = ({ value }) => {
-  const [date, setDate] = useState("");
-  const datePickerFormat = "YYYY-MM";
-  const datePickerUtils = {
-    format: datePickerFormat,
-    parse: (value) => dayjs(value, datePickerFormat, true).toDate(),
-    // You can add other utils as needed, such as `isValid`, etc.
-  };
+// const IsTest = ({ value }) => {
+//   const datePickerFormat = "YYYY-MM";
+//   const datePickerUtils = {
+//     format: datePickerFormat,
+//     parse: (value) => dayjs(value, datePickerFormat, true).toDate(),
+//     // You can add other utils as needed, such as `isValid`, etc.
+//   };
 
-  if (value == "Y") {
-    return (
-      <div>
-        <LocalizationProvider
-          dateAdapter={AdapterDayjs}
-          dateFormats={datePickerUtils}
-        >
-          <DatePicker
-            label="입학년월"
-            value={date}
-            format="YYYY / MM"
-            onChange={(newVal) => {
-              setDate(newVal);
-              console.log(date);
-            }}
-          />
-          <DatePicker
-            label="졸업년월"
-            value={date}
-            format="YYYY / MM"
-            onChange={(newVal) => {
-              setDate(newVal);
-              console.log(date.$y);
-              console.log(date.$m);
-            }}
-          />
-        </LocalizationProvider>
-      </div>
-    );
-  }
+//   if (value == "Y") {
+//     return (
+//       <div>
+//         <LocalizationProvider
+//           dateAdapter={AdapterDayjs}
+//           dateFormats={datePickerUtils}
+//         >
+//           <DatePicker
+//             label="입학년월"
+//             value={date}
+//             format="YYYY / MM"
+//             onChange={(newVal) => {
+//               const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+//                 2,
+//                 "0"
+//               )}-${String(newVal.$D).padStart(2, "0")}`;
+//               dispatch(setEduStartDate(day));
+//             }}
+//           />
+//           <DatePicker
+//             label="졸업년월"
+//             value={date}
+//             format="YYYY / MM"
+//             onChange={(newVal) => {
+//               const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+//                 2,
+//                 "0"
+//               )}-${String(newVal.$D).padStart(2, "0")}`;
+//               dispatch(setEduStartDate(day));
+//             }}
+//           />
+//         </LocalizationProvider>
+//       </div>
+//     );
+//   }
+// };
+
+const GED = ({ user, datePickerUtils, dispatch }) => {
+  return (
+    <div>
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        dateFormats={datePickerUtils}
+      >
+        <DatePicker
+          label="합격년월"
+          value={user.education}
+          format="YYYY / MM / DD"
+          onChange={(newVal) => {
+            const day = `${newVal.$y}-${String(newVal.$M + 1).padStart(
+              2,
+              "0"
+            )}-${String(newVal.$D).padStart(2, "0")}`;
+            dispatch(setEduPassedDay(day));
+          }}
+        />
+      </LocalizationProvider>
+    </div>
+  );
 };
 
 export default Edu;

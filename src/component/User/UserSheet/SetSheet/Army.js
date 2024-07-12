@@ -7,13 +7,9 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   ArmyYN,
   ReasonNo,
-  addHis,
-  deleteHis,
   setEndArmy,
-  setEndHis,
   setMilRank,
   setStartArmy,
-  setStartHis,
   setSurvNum,
   setWhichSurved,
 } from "../../../../store.js";
@@ -52,7 +48,6 @@ const Army = () => {
     <div>
       <div className={styles.army_title}>
         <select
-          required
           onChange={(e) => {
             dispatch(ArmyYN(e.target.value));
             if (e.target.value == "N") {
@@ -72,16 +67,14 @@ const Army = () => {
           <option value={"N"}>N</option>
         </select>
         <input
-          className={`${styles.reason_no}, ${hideReason}`}
-          required
           placeholder="면제사유"
+          className={`${styles.reason_no}, ${hideReason}`}
           onChange={(e) => {
             dispatch(ReasonNo(e.target.value));
           }}
         />
         <div className={`${armyFrom}`}>
           <LocalizationProvider
-            required
             dateAdapter={AdapterDayjs}
             dateFormats={datePickerUtils}
           >
@@ -111,7 +104,6 @@ const Army = () => {
             />
           </LocalizationProvider>
           <select
-            required
             onChange={(e) => {
               dispatch(setWhichSurved(e.target.value));
             }}
@@ -122,7 +114,6 @@ const Army = () => {
             <option value={"공군"}>공군</option>
           </select>
           <select
-            required
             onChange={(e) => {
               dispatch(setMilRank(e.target.value));
             }}
@@ -135,7 +126,6 @@ const Army = () => {
           </select>
           <input
             className={styles.surv_num}
-            required
             placeholder="xx-xxxxxxxx 형식"
             minLength="5"
             maxLength="11"

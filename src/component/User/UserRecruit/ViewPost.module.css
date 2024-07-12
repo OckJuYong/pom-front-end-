@@ -75,16 +75,27 @@
 .main {
   grid-area: m;
   text-align: center;
-  min-height: 1000px;
-  min-width: 800px;
-  width: 500px;
-  margin: 0 auto;
+  width: 800px;
+  margin: 0 auto 150px;
   display: fixed;
-  background-color: rgba(233, 233, 233, 0.278);
 }
 
 /*/ //////////////////////// FOOTER /////////////////////////*/
 .footer {
   grid-area: footer;
   text-align: center;
+}
+
+@media screen and (max-width: 1023) {
+  .viewContainer {
+    display: grid;
+    grid-template-areas:
+      "l pad r"
+      "l header r"
+      "l nav r"
+      "l m r"
+      "footer footer footer";
+  }
+}
+@media screen and (max-width: 767) {
 }

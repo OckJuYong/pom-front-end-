@@ -9,7 +9,7 @@ import DateSelect from "./SetSheet/DateSelect";
 import styles from "./UserSheet.module.css";
 
 const UserSheet = () => {
-  const [isThereSheet, setIsThereSheet] = useState(false);
+  const [isThereSheet, setIsThereSheet] = useState(true);
   return <div>{isThereSheet ? <ShowSheet /> : <Empty />}</div>;
 };
 
@@ -20,7 +20,7 @@ const Empty = () => {
 
   const [fade, setFade] = useState();
   const goToSetSheet = () => {
-    navigate("/setusersheet");
+    navigate("/set-sheet");
   };
 
   useEffect(() => {

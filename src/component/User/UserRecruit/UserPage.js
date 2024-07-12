@@ -5,18 +5,18 @@ import { Link } from "react-router-dom";
 
 const UserPage = () => {
   const posts = useSelector((state) => {
-    return state.posts;
+    return state.postList;
   });
   return (
     <div className={styles.viewContainer}>
       <div className={styles.pad}></div>
-      <header className={styles.Nav}>채용공고</header>
+      <header className={styles.Nav}>채용공고 - 유저</header>
       <nav className={styles.btnContainer}>
         <div className={styles.leftWrap}>
           <span>ㅎㅇ</span>
         </div>
         <div className={styles.rightWrap}>
-          <Link className={styles.write} to={`/write.post`}>
+          <Link className={styles.write} to={`/write-post`}>
             <span>글쓰기</span>
           </Link>
         </div>
@@ -43,7 +43,7 @@ const UserPage = () => {
               <tr key={i} className={styles.tableposts}>
                 <td>{posts[i].id}</td>
                 <td>
-                  <Link className={styles.titleHref} to={"/view.post"}>
+                  <Link className={styles.titleHref} to={"/view-post"}>
                     {posts[i].title}
                   </Link>
                 </td>
